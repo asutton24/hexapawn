@@ -1,3 +1,5 @@
+import random
+
 class Pawn:
 
 	def __init__(self, x, y, color):
@@ -46,8 +48,8 @@ class Hexapawn:
 		self.wpawns = []
 		self.bpawns = []
 		for i in range(3):
-			self.wpawns.append(Pawn(i, 0, "black"))
-			self.bpawns.append(Pawn(i, 2, "white"))
+			self.wpawns.append(Pawn(i, 2, "white"))
+			self.bpawns.append(Pawn(i, 0, "black"))
 		self.winner = 0
 
 	def pawnAt(self, pos):
@@ -158,6 +160,44 @@ class Hexapawn:
 					ret += 'X'
 		return ret
 
+class HexAI:
+	
+	def __init__(self):
+		self.forbidden = {}
+		self.lastMove = None
+		self.game = None
+
+	def getPossibleMoves(self):
+		moves = []
+		for p in self.game.bpawns:
+			for i in range(-1, 2):
+				if self.game.probeMove((p.x, p.y), (p.x + i, p.y + 1)):
+					moves.append(((p.x, p.y), (p.x + i, p.y + 1)))
+		return moves
+
+	def getValidMoves(self):
+		moves = self.getPossibleMoves()
+		return [m for m in moves if not m in self.forbidden.get(self.game.getStateString(), [])]
+
+	def makeMove(self):
+		if self.game.turn == "white":
+			return False
+		moves = self.getValidMoves(self)
+		if len(moves) == 0:
+			return False
+		curMove = random.choice(moves)
+		self.game.doMove(curMove[0], curMove[1])
+		self.game.updateWinner()
+		self.lastMove = [self.game.getStateString(), curMove]
+		return True
+
+	def updateForbidden(self):
+		if self.forbidden.get(self.lastMove[0]) == None:
+			self.forbidden[self.lastMove[0]] = [self.lastMove[1]]
+		else:
+			self.forbidden[self.lastMove[0]].append(self.lastMove[1])
+
+			
 def prettyPrint(h):
 	s = h.getStateString()
 	s = s.replace("X", " ")
@@ -166,7 +206,9 @@ def prettyPrint(h):
 
 h = Hexapawn()
 
+ai = HexAI()
+ai.game = h
+
 h.doMove((1,2),(1,1))
-h.doMove((2,0),(2,1))
-h.doMove((1,1),(0,0))
+print(ai.getValidMoves())
 prettyPrint(h)
