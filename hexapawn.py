@@ -114,6 +114,8 @@ class Hexapawn:
 	
 	def doMove(self, start, target):
 		ret = self.move(start, target, False)
+		if ret == -1:
+			return ret
 		if self.turn == "black":
 			self.turn = "white"
 		else:
@@ -182,7 +184,10 @@ class HexAI:
 	def makeMove(self):
 		if self.game.turn == "white":
 			return False
-		moves = self.getValidMoves(self)
+		print(self.getPossibleMoves())
+		moves = self.getValidMoves()
+		print(moves)
+		print(self.forbidden)
 		if len(moves) == 0:
 			return False
 		curMove = random.choice(moves)
@@ -204,11 +209,3 @@ def prettyPrint(h):
 	for i in range(3):
 		print(s[(3*i):(3*i+3)])
 
-h = Hexapawn()
-
-ai = HexAI()
-ai.game = h
-
-h.doMove((1,2),(1,1))
-print(ai.getValidMoves())
-prettyPrint(h)
