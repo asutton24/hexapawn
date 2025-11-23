@@ -35,6 +35,20 @@ def drawPawns(screen, state):
 			x = 0
 			y += 1
 
+def drawMoves(screen, moves):	
+	boxSize = HEIGHT // SCALING
+	originx = WIDTH // 2 - boxSize
+	originy = HEIGHT // 2 - boxSize
+	lineThickness = boxSize // 20
+	colors=[(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]
+	colorI = 0
+	
+	for m in moves:
+		start = (m[0][0] * boxSize + originx, m[0][1] * boxSize + originy)
+		end = (m[1][0] * boxSize + originx, m[1][1] * boxSize + originy)
+		pygame.draw.line(screen, colors[colorI], start, end, int(lineThickness))
+		colorI += 1
+
 def getClickedTile(mx, my):
 	boxSize = HEIGHT // SCALING
 	originx = WIDTH // 2 - (boxSize * 3 // 2)
@@ -58,6 +72,10 @@ def main():
 	ai.game = game
 	
 	mode = 'auto'
+	
+	viewMoves = False
+
+	viewWait = True
 
 	while running:
 		clock.tick(60)
@@ -67,11 +85,14 @@ def main():
 				running = False
 			elif event.type == pygame.MOUSEBUTTONDOWN:
 				if event.button == 1:
-					tiles.append(getClickedTile(event.pos[0], event.pos[1]))
+					if game.turn == "white" or mode == "manual":
+						tiles.append(getClickedTile(event.pos[0], event.pos[1]))
+					viewWait = False
 			elif event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_r:
 					game = Hexapawn()
 					ai.game = game
+					viewWait = False
 				elif event.key == pygame.K_t:
 					if mode == "train":
 						mode = "auto"
@@ -79,7 +100,21 @@ def main():
 						mode = "train"
 				elif event.key == pygame.K_h:
 					game.printGame()
-		if game.winner != 0:
+				elif event.key == pygame.K_v:
+					viewMoves = not viewMoves
+					viewWait = game.turn == 'black'
+				elif event.key == pygame.K_SPACE:
+					viewWait = False
+				elif event.key == pygame.K_f:
+					ai.forbidden = {}
+				elif event.key == pygame.K_s:
+					if mode == "manual":
+						mode = "auto"
+					else:
+						mode = "manual"
+		if viewMoves and viewWait:
+			pass
+		elif game.winner != 0:
 			if game.winner == -1:
 				print("Player win")
 				print("Total forbidden Moves: ", ai.totalForbidden)
@@ -95,8 +130,11 @@ def main():
 		elif game.turn == 'white' and len(tiles) == 2 and mode in ["auto", "manual"]:
 			game.doMove(tiles[0], tiles[1])
 			game.updateWinner()
-			if game.winner == -1 and mode == 'auto':
+			if game.winner == -1 and mode == "auto":
 				ai.updateForbidden()
+				viewWait = False
+			else:
+				viewWait = mode == "auto"
 			tiles = []
 		elif game.turn == 'white' and mode == "train":
 			ai.autoPlayWhite()
@@ -106,11 +144,15 @@ def main():
 			game.doMove(tiles[0], tiles[1])
 			game.updateWinner()
 			tiles = []
+			viewWait = False
 		elif game.turn == 'black' and mode in ["auto", "train"]:
 			ai.makeMove() 
 			game.updateWinner()
+			viewWait = False
 		screen.fill((0, 0, 0))
 		drawBoard(screen)
+		if viewMoves and game.turn == 'black' and game.winner == 0:
+			drawMoves(screen, ai.getValidMoves())
 		drawPawns(screen, game.getStateString())
 		pygame.display.update()
 
