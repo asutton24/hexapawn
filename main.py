@@ -2,7 +2,7 @@ import pygame
 from hexapawn import Hexapawn, HexAI
 
 
-WIDTH = 320
+WIDTH = 1600
 HEIGHT = WIDTH * 9 / 16
 SCALING = 3.5
 
@@ -72,19 +72,41 @@ def main():
 				if event.key == pygame.K_r:
 					game = Hexapawn()
 					ai.game = game
+				elif event.key == pygame.K_t:
+					if mode == "train":
+						mode = "auto"
+					else:
+						mode = "train"
+				elif event.key == pygame.K_h:
+					game.printGame()
 		if game.winner != 0:
+			if game.winner == -1:
+				print("Player win")
+				print("Total forbidden Moves: ", ai.totalForbidden)
+				game.winner = -2
+			elif game.winner == 1:
+				#print("CPU Win")
+				#print("Total forbidden Moves: ", ai.totalForbidden)
+				game.winner = 2
+			if mode == "train":
+				game = Hexapawn()
+				ai.game = game
 			tiles = []
-		elif game.turn == 'white' and len(tiles) == 2:
+		elif game.turn == 'white' and len(tiles) == 2 and mode in ["auto", "manual"]:
 			game.doMove(tiles[0], tiles[1])
 			game.updateWinner()
 			if game.winner == -1 and mode == 'auto':
 				ai.updateForbidden()
 			tiles = []
+		elif game.turn == 'white' and mode == "train":
+			ai.autoPlayWhite()
+			if game.winner == -1:
+				ai.updateForbidden()
 		elif game.turn == 'black' and mode == 'manual' and len(tiles) == 2:
 			game.doMove(tiles[0], tiles[1])
 			game.updateWinner()
 			tiles = []
-		elif game.turn == 'black' and mode == 'auto':
+		elif game.turn == 'black' and mode in ["auto", "train"]:
 			ai.makeMove() 
 			game.updateWinner()
 		screen.fill((0, 0, 0))

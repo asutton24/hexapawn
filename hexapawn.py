@@ -47,6 +47,7 @@ class Hexapawn:
 		self.turn = "white"
 		self.wpawns = []
 		self.bpawns = []
+		self.moveHistory = []
 		for i in range(3):
 			self.wpawns.append(Pawn(i, 2, "white"))
 			self.bpawns.append(Pawn(i, 0, "black"))
@@ -81,6 +82,8 @@ class Hexapawn:
 				return
 		
 	def move(self, start, target, probe):
+		if start == None or target == None or start == target:
+			return False
 		if (not self.pawnAt(start)) or self.getPawnAt(start).color != self.turn:
 			return False
 		if (self.turn == "white" and start[1] - target[1] != 1) or (self.turn == "black" and target[1] - start[1] != 1): 
@@ -113,8 +116,9 @@ class Hexapawn:
 		return False
 	
 	def doMove(self, start, target):
+		self.moveHistory.append(self.getStateString())
 		ret = self.move(start, target, False)
-		if ret == -1:
+		if not ret:
 			return ret
 		if self.turn == "black":
 			self.turn = "white"
@@ -161,6 +165,22 @@ class Hexapawn:
 				else:
 					ret += 'X'
 		return ret
+	
+	def prettyPrint(self, s):
+		s = s.replace("X", " ")
+		for i in range(3):
+			print(s[(3*i):(3*i+3)])
+
+	def printGame(self):
+		colors = ["White", "Black"]
+		colorI = 0
+		for m in self.moveHistory:
+			print("Turn: " + colors[colorI % 2])
+			self.prettyPrint(m)
+			colorI += 1
+		print("Turn: " + colors[colorI % 2])
+		self.prettyPrint(self.getStateString())
+
 
 class HexAI:
 	
@@ -168,7 +188,9 @@ class HexAI:
 		self.forbidden = {}
 		self.lastMove = None
 		self.game = None
-
+		self.totalForbidden = 0
+		self.oneMove = False
+		
 	def getPossibleMoves(self):
 		moves = []
 		for p in self.game.bpawns:
@@ -176,36 +198,56 @@ class HexAI:
 				if self.game.probeMove((p.x, p.y), (p.x + i, p.y + 1)):
 					moves.append(((p.x, p.y), (p.x + i, p.y + 1)))
 		return moves
-
-	def getValidMoves(self):
-		moves = self.getPossibleMoves()
-		return [m for m in moves if not m in self.forbidden.get(self.game.getStateString(), [])]
-
-	def makeMove(self):
-		if self.game.turn == "white":
-			return False
-		print(self.getPossibleMoves())
-		moves = self.getValidMoves()
-		print(moves)
-		print(self.forbidden)
-		if len(moves) == 0:
+	
+	def autoPlayWhite(self):
+		moves = []
+		for p in self.game.wpawns:
+			for i in range(-1, 2):
+				if self.game.probeMove((p.x, p.y), (p.x + i, p.y - 1)):
+					moves.append(((p.x, p.y), (p.x + i, p.y - 1)))
+		if self.game.turn == "black":
 			return False
 		curMove = random.choice(moves)
 		self.game.doMove(curMove[0], curMove[1])
 		self.game.updateWinner()
-		self.lastMove = [self.game.getStateString(), curMove]
 		return True
+		
+	def getValidMoves(self):
+		moves = self.getPossibleMoves()
+		forbidden = self.forbidden.get(self.game.getStateString(), [])
+		allowed = []
+		for m in moves:
+			found = False
+			for f in forbidden:
+				if m[0] == f[0] and m[1] == f[1]:
+					found = True
+			if not found:
+				allowed.append(m)
+		return allowed
 
+	def makeMove(self):
+		if self.game.turn == "white":
+			return False
+		state = self.game.getStateString()
+		moves = self.getValidMoves()
+		if len(moves) == 0:
+			return False
+		self.oneMove = len(moves) == 1
+		curMove = random.choice(moves)
+		self.game.doMove(curMove[0], curMove[1])
+		self.game.updateWinner()
+		self.lastMove = [state, curMove]
+		return True
+	
 	def updateForbidden(self):
+		if self.oneMove:
+			return
 		if self.forbidden.get(self.lastMove[0]) == None:
 			self.forbidden[self.lastMove[0]] = [self.lastMove[1]]
 		else:
 			self.forbidden[self.lastMove[0]].append(self.lastMove[1])
+		self.totalForbidden += 1
 
 			
-def prettyPrint(h):
-	s = h.getStateString()
-	s = s.replace("X", " ")
-	for i in range(3):
-		print(s[(3*i):(3*i+3)])
+
 
