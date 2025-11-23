@@ -107,6 +107,7 @@ def main():
 					viewWait = False
 				elif event.key == pygame.K_f:
 					ai.forbidden = {}
+					ai.totalForbidden = 0
 				elif event.key == pygame.K_s:
 					if mode == "manual":
 						mode = "auto"
