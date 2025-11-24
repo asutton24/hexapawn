@@ -90,6 +90,8 @@ def main():
 
 	viewWait = True
 
+	potential = False
+
 	while running:
 		clock.tick(60)
 
@@ -128,6 +130,8 @@ def main():
 						mode = "manual"
 				elif event.key == pygame.K_q:
 					running = False
+				elif event.key == pygame.K_p:
+					potential = not potential
 		if viewMoves and viewWait:
 			pass
 		elif game.winner != 0:
@@ -168,7 +172,10 @@ def main():
 		screen.fill((0, 0, 0))
 		drawBoard(screen)
 		if viewMoves and game.turn == 'black' and game.winner == 0:
-			drawMoves(screen, ai.getValidMoves())
+			if potential:
+				drawMoves(screen, ai.getPossibleMoves())
+			else:
+				drawMoves(screen, ai.getValidMoves())
 		drawPawns(screen, game.getStateString())
 		pygame.display.update()
 
