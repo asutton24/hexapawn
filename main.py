@@ -1,10 +1,24 @@
 import pygame
 from hexapawn import Hexapawn, HexAI
+import cairosvg
+import io
 
+pygame.init()
 
-WIDTH = 1600
-HEIGHT = WIDTH * 9 / 16
+WIDTH, HEIGHT = desktop_width, desktop_height = pygame.display.get_desktop_sizes()[0]
 SCALING = 3.5
+
+with open("wpawn.svg", "rb") as f:
+	wdata = f.read()
+	f.close()
+with open("bpawn.svg", "rb") as f:
+	bdata = f.read()
+	f.close()
+wbytes = cairosvg.svg2png(bytestring=wdata, output_width= HEIGHT // SCALING, output_height= HEIGHT // SCALING)
+bbytes = cairosvg.svg2png(bytestring=bdata, output_width= HEIGHT // SCALING, output_height= HEIGHT // SCALING)
+whitePawn = pygame.image.load(io.BytesIO(wbytes), "wpawn.png")
+blackPawn = pygame.image.load(io.BytesIO(bbytes), "bpawn.png")
+
 
 def drawBoard(screen):
 	boxSize = HEIGHT // SCALING
@@ -20,16 +34,16 @@ def drawBoard(screen):
 def drawPawns(screen, state):
 	radius = HEIGHT // (SCALING * 2.7)
 	boxSize = HEIGHT // SCALING
-	originx = WIDTH // 2 - boxSize
-	originy = HEIGHT // 2 - boxSize
+	originx = WIDTH // 2 - (boxSize * 3 // 2)
+	originy = HEIGHT // 2 - (boxSize * 3 // 2)
 	x = 0
 	y = 0
 
 	for c in state:
 		if c == 'B':
-			pygame.draw.circle(screen, (0, 0, 0), (originx + x * boxSize, originy + y * boxSize), radius, 0)
+			screen.blit(blackPawn, (originx + x * boxSize, originy + y * boxSize))
 		if c == 'W':
-			pygame.draw.circle(screen, (255, 255, 255), (originx + x * boxSize, originy + y * boxSize), radius, 0)
+			screen.blit(whitePawn, (originx + x * boxSize, originy + y * boxSize))
 		x += 1
 		if x == 3:
 			x = 0
@@ -60,9 +74,8 @@ def getClickedTile(mx, my):
 	return None
 
 def main():
-	pygame.init()
 
-	screen = pygame.display.set_mode((WIDTH, HEIGHT))
+	screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
 	clock = pygame.time.Clock()
 	running = True
 	tiles = []
@@ -113,6 +126,8 @@ def main():
 						mode = "auto"
 					else:
 						mode = "manual"
+				elif event.key == pygame.K_q:
+					running = False
 		if viewMoves and viewWait:
 			pass
 		elif game.winner != 0:
