@@ -49,7 +49,7 @@ def drawPawns(screen, state):
 			x = 0
 			y += 1
 
-def drawMoves(screen, moves):	
+def drawMoves(screen, moves, allMoves):	
 	boxSize = HEIGHT // SCALING
 	originx = WIDTH // 2 - boxSize
 	originy = HEIGHT // 2 - boxSize
@@ -57,7 +57,10 @@ def drawMoves(screen, moves):
 	colors=[(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]
 	colorI = 0
 	
-	for m in moves:
+	for m in allMoves:
+		if not (m in moves):
+			colorI += 1
+			continue
 		start = (m[0][0] * boxSize + originx, m[0][1] * boxSize + originy)
 		end = (m[1][0] * boxSize + originx, m[1][1] * boxSize + originy)
 		pygame.draw.line(screen, colors[colorI], start, end, int(lineThickness))
@@ -173,9 +176,9 @@ def main():
 		drawBoard(screen)
 		if viewMoves and game.turn == 'black' and game.winner == 0:
 			if potential:
-				drawMoves(screen, ai.getPossibleMoves())
+				drawMoves(screen, ai.getPossibleMoves(), ai.getPossibleMoves())
 			else:
-				drawMoves(screen, ai.getValidMoves())
+				drawMoves(screen, ai.getValidMoves(), ai.getPossibleMoves())
 		drawPawns(screen, game.getStateString())
 		pygame.display.update()
 
