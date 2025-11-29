@@ -135,6 +135,8 @@ def main():
 					running = False
 				elif event.key == pygame.K_p:
 					potential = not potential
+				elif event.key == pygame.K_u:
+					ai.updateForbidden()
 		if viewMoves and viewWait:
 			pass
 		elif game.winner != 0:
@@ -164,7 +166,9 @@ def main():
 			if game.winner == -1:
 				ai.updateForbidden()
 		elif game.turn == 'black' and mode == 'manual' and len(tiles) == 2:
-			game.doMove(tiles[0], tiles[1])
+			lastState = game.getStateString()
+			if game.doMove(tiles[0], tiles[1]):
+				ai.lastMove = [lastState, tiles]
 			game.updateWinner()
 			tiles = []
 			viewWait = False
